@@ -1,0 +1,111 @@
+{
+  "name": "Merlows_Main_Topics_Workflow",
+  "nodes": [
+    {
+      "id": "1",
+      "name": "UK - National Identity & Reform",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [250, 200],
+      "parameters": {
+        "url": "https://merlows.com/api/create-post",
+        "method": "POST",
+        "jsonParameters": true,
+        "options": {},
+        "bodyParametersJson": {
+          "category": "UK",
+          "titleTemplate": "Reform Rising: Britain’s Political Awakening",
+          "summary": "Analysis of political and cultural shifts in the UK—immigration, sovereignty, censorship, and media accountability.",
+          "keywords": "UK politics, Reform UK, Farage, national identity, immigration, censorship",
+          "status": "draft"
+        }
+      }
+    },
+    {
+      "id": "2",
+      "name": "Israel - Security & Sovereignty",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [550, 200],
+      "parameters": {
+        "url": "https://merlows.com/api/create-post",
+        "method": "POST",
+        "jsonParameters": true,
+        "options": {},
+        "bodyParametersJson": {
+          "category": "Israel",
+          "titleTemplate": "Strength Restored: Israel’s Fight for Survival",
+          "summary": "Commentary on Israel’s defence strategy, hostage negotiations, Abraham Accords expansion, and Western media hypocrisy.",
+          "keywords": "Israel, Netanyahu, Gaza, defence, Abraham Accords, media bias",
+          "status": "draft"
+        }
+      }
+    },
+    {
+      "id": "3",
+      "name": "Iran - Revolution & Regime Collapse",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [850, 200],
+      "parameters": {
+        "url": "https://merlows.com/api/create-post",
+        "method": "POST",
+        "jsonParameters": true,
+        "options": {},
+        "bodyParametersJson": {
+          "category": "Iran",
+          "titleTemplate": "Persia Rising: The Fall of the Islamic Republic",
+          "summary": "Coverage of Iran’s internal unrest, sanctions, the snapback mechanism, and the growing call for a Persian restoration allied with the West.",
+          "keywords": "Iran, sanctions, regime change, human rights, Persia, Israel relations",
+          "status": "draft"
+        }
+      }
+    },
+    {
+      "id": "4",
+      "name": "Abraham Accords - Regional Peace & Trade",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [1150, 200],
+      "parameters": {
+        "url": "https://merlows.com/api/create-post",
+        "method": "POST",
+        "jsonParameters": true,
+        "options": {},
+        "bodyParametersJson": {
+          "category": "Abraham Accords",
+          "titleTemplate": "Accords Ascendant: Peace Through Strength and Commerce",
+          "summary": "Tracking the growth of Middle Eastern cooperation through trade, security, and shared defence — the pragmatic peace reshaping the region.",
+          "keywords": "Abraham Accords, peace, trade, UAE, Saudi Arabia, Israel, Middle East",
+          "status": "draft"
+        }
+      }
+    },
+    {
+      "id": "5",
+      "name": "United Nations - Corruption & Credibility",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [1450, 200],
+      "parameters": {
+        "url": "https://merlows.com/api/create-post",
+        "method": "POST",
+        "jsonParameters": true,
+        "options": {},
+        "bodyParametersJson": {
+          "category": "United Nations",
+          "titleTemplate": "UNmasked: The Moral Collapse of Global Institutions",
+          "summary": "Investigation into the UN’s political bias, its complicity with regimes, and the urgent need for reform or replacement.",
+          "keywords": "UN, UNRWA, corruption, Gaza, Israel, human rights, accountability",
+          "status": "draft"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "1": { "main": [[ { "node": "2", "type": "main", "index": 0 } ]] },
+    "2": { "main": [[ { "node": "3", "type": "main", "index": 0 } ]] },
+    "3": { "main": [[ { "node": "4", "type": "main", "index": 0 } ]] },
+    "4": { "main": [[ { "node": "5", "type": "main", "index": 0 } ]] }
+  }
+}
