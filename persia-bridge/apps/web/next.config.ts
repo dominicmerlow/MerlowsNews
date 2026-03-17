@@ -13,9 +13,7 @@ const config: NextConfig = {
       { protocol: 'https', hostname: '**.cloudinary.com' },
     ],
   },
-  experimental: {
-    serverComponentsExternalPackages: ['@prisma/client'],
-  },
+  serverExternalPackages: ['@prisma/client'],
 }
 
 export default config
