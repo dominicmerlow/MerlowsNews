@@ -14,12 +14,12 @@
 |------|-------|--------|
 | [01](./01-information-architecture.md) | Information Architecture | ✅ Complete |
 | [02](./02-user-roles-and-permissions.md) | User Roles & Permissions | ✅ Complete |
-| 03 | Core Modules — Member Directory, The Bazaar, Deal Room | Pending |
-| 04 | Core Modules — Syndicate Engine, Knowledge Base, The Chronicle | Pending |
-| 05 | Core Modules — Chapter Hub, Heritage Layer | Pending |
-| 06 | Tech Stack Recommendations | Pending |
-| 07 | Data Models | Pending |
-| 08 | MVP Scope vs Full Build Scope | Pending |
+| [03](./03-core-modules-directory-bazaar-dealroom.md) | Core Modules — Member Directory, The Bazaar, Deal Room | ✅ Complete |
+| [04](./04-core-modules-syndicates-knowledge-chronicle.md) | Core Modules — Syndicate Engine, Knowledge Base, The Chronicle | ✅ Complete |
+| [05](./05-core-modules-chapters-heritage.md) | Core Modules — Chapter Hub, Heritage Layer | ✅ Complete |
+| [06](./06-tech-stack.md) | Tech Stack Recommendations | ✅ Complete |
+| [07](./07-data-models.md) | Data Models | ✅ Complete |
+| [08](./08-mvp-vs-full-build.md) | MVP Scope vs Full Build Scope | ✅ Complete |
 
 ---
 
