@@ -11,6 +11,7 @@ declare module 'next-auth' {
       id: string
       name: string | null
       email: string
+      image: string | null
       memberId: string | null
       roles: MemberRole[]
       tier: MembershipTier | null
