@@ -5,7 +5,7 @@ import { ApplicationSchema, ProfileUpdateSchema, ConnectionRequestSchema } from 
 
 export const memberRouter = router({
   // ─── Public: submit application ─────────────────────────────────────
-  apply: publicProcedure.input(ApplicationSchema).mutation(async ({ ctx, input }) => {
+  submitApplication: publicProcedure.input(ApplicationSchema).mutation(async ({ ctx, input }) => {
     const existing = await ctx.db.user.findUnique({ where: { email: input.email } })
     if (existing) {
       throw new TRPCError({

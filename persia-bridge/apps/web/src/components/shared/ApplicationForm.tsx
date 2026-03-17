@@ -17,7 +17,7 @@ export function ApplicationForm() {
     resolver: zodResolver(ApplicationSchema),
   })
 
-  const submit = trpc.member.apply.useMutation({
+  const submit = trpc.member.submitApplication.useMutation({
     onSuccess: () => setSubmitted(true),
   })
 
