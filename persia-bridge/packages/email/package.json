@@ -1,0 +1,17 @@
+{
+  "name": "@persia-bridge/email",
+  "version": "0.0.1",
+  "private": true,
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@react-email/components": "^0.0.25",
+    "react": "^19.0.0",
+    "react-email": "^3.0.5"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "typescript": "^5.6.3"
+  }
+}
