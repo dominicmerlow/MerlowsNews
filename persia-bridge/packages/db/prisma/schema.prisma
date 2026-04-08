@@ -1,0 +1,1036 @@
+// Persia Bridge — Prisma Schema
+// Platform: Persia Bridge | Brand: The Cyrus Accord
+// Version: 1.0 | Date: March 2026
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ENUMS
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum MembershipTier {
+  COMMUNITY
+  FULL
+  INVESTOR
+  LEAD_INVESTOR
+  INSTITUTIONAL
+  HONORARY
+}
+
+enum CommunityIdentity {
+  IRANIAN_DIASPORA
+  JEWISH_ISRAELI_DIASPORA
+  FRIEND_OF_THE_ACCORD
+}
+
+enum MemberRole {
+  MEMBER
+  CONTRIBUTOR
+  VENDOR
+  INVESTOR
+  LEAD_INVESTOR
+  CHAPTER_LEAD
+  CHAPTER_DEPUTY
+  DEAL_MANAGER
+  OPS_ADMIN
+  EDITORIAL_ADMIN
+  PLATFORM_ADMIN
+  SUPER_ADMIN
+}
+
+enum VerificationStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum ApplicationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  WITHDRAWN
+}
+
+enum SuspensionStatus {
+  WARNING
+  CONTENT_RESTRICTED
+  MESSAGING_RESTRICTED
+  SUSPENDED
+  PERMANENTLY_BANNED
+}
+
+enum ConnectionStatus {
+  PENDING
+  CONNECTED
+  IGNORED
+  BLOCKED
+}
+
+enum OrgType {
+  COMPANY
+  FAMILY_OFFICE
+  FUND
+  NGO
+  GOVERNMENT_BODY
+  OTHER
+}
+
+enum ChapterMemberStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum ChapterMemberRole {
+  MEMBER
+  DEPUTY_LEAD
+  LEAD
+}
+
+enum EventType {
+  MEMBER_DINNER
+  SYNDICATE_SUMMIT
+  CYRUS_LECTURE
+  HERITAGE_CELEBRATION
+  WORKING_GROUP
+  VIRTUAL_EVENT
+  OTHER
+}
+
+enum EventAccessLevel {
+  ALL_MEMBERS
+  CHAPTER_ONLY
+  INVESTOR_ONLY
+  INVITE_ONLY
+}
+
+enum RsvpStatus {
+  CONFIRMED
+  CANCELLED
+  ATTENDED
+}
+
+enum ListingType {
+  PRODUCT_EXPORT
+  PRODUCT_IMPORT
+  SERVICE_OFFER
+  SERVICE_SOUGHT
+  PARTNERSHIP
+  TENDER_RFP
+}
+
+enum ListingStatus {
+  DRAFT
+  PENDING_REVIEW
+  LIVE
+  EXPIRED
+  CLOSED
+  REJECTED
+  REMOVED
+}
+
+enum DealType {
+  EQUITY
+  REAL_ESTATE
+  INFRASTRUCTURE
+  TRADE_FINANCE
+  VENTURE
+  SOCIAL_IMPACT
+}
+
+enum DealStatus {
+  DRAFT
+  UNDER_REVIEW
+  OPEN
+  IN_SYNDICATION
+  CLOSED_FUNDED
+  CLOSED_UNFUNDED
+  WITHDRAWN
+}
+
+enum SyndicateType {
+  COMMERCIAL
+  INFRASTRUCTURE
+  TRADE
+  SOCIAL_IMPACT
+  VENTURE
+}
+
+enum SyndicateStatus {
+  DRAFT
+  OPEN
+  IN_PROGRESS
+  CLOSED_FUNDED
+  WOUND_DOWN
+}
+
+enum SyndicateMemberRole {
+  LEAD
+  CO_LEAD
+  PARTICIPANT
+}
+
+enum ArticleStatus {
+  DRAFT
+  IN_REVIEW
+  APPROVED
+  PUBLISHED
+  UNPUBLISHED
+  ARCHIVED
+}
+
+enum ArticleType {
+  ANALYSIS
+  OP_ED
+  MARKET_INTELLIGENCE
+  INTERVIEW
+  SYNDICATE_ANNOUNCEMENT
+  CHAPTER_COVERAGE
+  INSTITUTE_BRIEF
+}
+
+enum TagType {
+  SECTOR
+  EXPERTISE
+  GEOGRAPHY
+  THEME
+  COMMUNITY
+  KNOWLEDGE_CATEGORY
+  CHRONICLE_CATEGORY
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AUTH (NextAuth / Auth.js)
+// ─────────────────────────────────────────────────────────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  emailVerified DateTime?
+  phone         String?
+  phoneVerified Boolean   @default(false)
+  passwordHash  String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
+
+  member   Member?
+  accounts Account[]
+  sessions Session[]
+  auditLogs AuditLog[] @relation("actor")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  accessToken       String?
+  refreshToken      String?
+  expiresAt         Int?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MEMBERS & PROFILES
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Member {
+  id                  String             @id @default(cuid())
+  userId              String             @unique
+  user                User               @relation(fields: [userId], references: [id])
+  fullName            String
+  displayName         String?
+  slug                String?            @unique
+  communityIdentity   CommunityIdentity
+  headline            String?            @db.VarChar(120)
+  bio                 String?            @db.Text
+  profilePhotoUrl     String?
+  websiteUrl          String?
+  linkedInUrl         String?
+  countryCode         String?
+  city                String?
+  tier                MembershipTier     @default(COMMUNITY)
+  roles               MemberRole[]       @default([MEMBER])
+  memberSince         DateTime           @default(now())
+  applicationStatus   ApplicationStatus  @default(PENDING)
+  suspensionStatus    SuspensionStatus?
+  emailVerified       Boolean            @default(false)
+  phoneVerified       Boolean            @default(false)
+  kycStatus           VerificationStatus @default(PENDING)
+  kycReferenceId      String?
+  kybStatus           VerificationStatus @default(PENDING)
+  kybReferenceId      String?
+  accreditedInvestor  Boolean            @default(false)
+  accreditedVerifiedAt DateTime?
+  linkedInVerified    Boolean            @default(false)
+  trustScore          Int                @default(0)
+  referredById        String?
+  referredBy          Member?            @relation("Referrals", fields: [referredById], references: [id])
+  referrals           Member[]           @relation("Referrals")
+  privacySettings     Json               @default("{}")
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  deletedAt           DateTime?
+  lastActiveAt        DateTime?
+
+  chapterAffiliations  ChapterMember[]
+  connectionsFrom      Connection[]              @relation("ConnectionFrom")
+  connectionsTo        Connection[]              @relation("ConnectionTo")
+  expertiseTags        MemberExpertise[]
+  industries           MemberIndustry[]
+  languages            MemberLanguage[]
+  organizationMembers  OrganizationMember[]
+  bazaarListings       BazaarListing[]
+  dealNDAs             DealNDA[]
+  syndicateMemberships SyndicateMember[]
+  chronicleAuthors     ChronicleArticleAuthor[]
+  knowledgeAuthors     KnowledgeDocAuthor[]
+  eventRsvps           EventRsvp[]
+  notifications        Notification[]
+  auditLogs            AuditLog[]                @relation("subject")
+  messagesSent         Message[]
+  threadParticipants   MessageThreadParticipant[]
+  chapterAnnouncements ChapterAnnouncement[]
+  dealIOIs             DealIndicatorOfInterest[]
+
+  @@index([slug])
+  @@index([tier])
+  @@index([communityIdentity])
+  @@index([countryCode])
+  @@index([applicationStatus])
+}
+
+model MemberExpertise {
+  id       String @id @default(cuid())
+  memberId String
+  member   Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  tagId    String
+  tag      Tag    @relation("ExpertiseTags", fields: [tagId], references: [id])
+
+  @@unique([memberId, tagId])
+}
+
+model MemberIndustry {
+  id       String @id @default(cuid())
+  memberId String
+  member   Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  tagId    String
+  tag      Tag    @relation("IndustryTags", fields: [tagId], references: [id])
+
+  @@unique([memberId, tagId])
+}
+
+model MemberLanguage {
+  id         String @id @default(cuid())
+  memberId   String
+  member     Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  languageCode String // ISO 639-1
+
+  @@unique([memberId, languageCode])
+}
+
+model Connection {
+  id        String           @id @default(cuid())
+  fromId    String
+  from      Member           @relation("ConnectionFrom", fields: [fromId], references: [id])
+  toId      String
+  to        Member           @relation("ConnectionTo", fields: [toId], references: [id])
+  status    ConnectionStatus @default(PENDING)
+  message   String?
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  @@unique([fromId, toId])
+  @@index([fromId, status])
+  @@index([toId, status])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ORGANISATIONS
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Organization {
+  id             String             @id @default(cuid())
+  name           String
+  slug           String             @unique
+  type           OrgType
+  description    String?            @db.Text
+  websiteUrl     String?
+  logoUrl        String?
+  countryCode    String?
+  kybStatus      VerificationStatus @default(PENDING)
+  kybReferenceId String?
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  deletedAt      DateTime?
+
+  members OrganizationMember[]
+  sectors OrganizationSector[]
+}
+
+model OrganizationMember {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  memberId       String
+  member         Member       @relation(fields: [memberId], references: [id])
+  role           String       @default("member")
+
+  @@unique([organizationId, memberId])
+}
+
+model OrganizationSector {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  tagId          String
+  tag            Tag          @relation("OrgSectors", fields: [tagId], references: [id])
+
+  @@unique([organizationId, tagId])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CHAPTERS & EVENTS
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Chapter {
+  id               String   @id @default(cuid())
+  name             String
+  slug             String   @unique
+  city             String
+  countryCode      String
+  description      String?  @db.Text
+  coverImageUrl    String?
+  venueDescription String?
+  contactEmail     String?
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  members       ChapterMember[]
+  events        Event[]
+  announcements ChapterAnnouncement[]
+}
+
+model ChapterMember {
+  id        String              @id @default(cuid())
+  chapterId String
+  chapter   Chapter             @relation(fields: [chapterId], references: [id])
+  memberId  String
+  member    Member              @relation(fields: [memberId], references: [id])
+  isPrimary Boolean             @default(false)
+  status    ChapterMemberStatus @default(PENDING)
+  role      ChapterMemberRole   @default(MEMBER)
+  joinedAt  DateTime?
+  createdAt DateTime            @default(now())
+
+  @@unique([chapterId, memberId])
+}
+
+model ChapterAnnouncement {
+  id          String   @id @default(cuid())
+  chapterId   String
+  chapter     Chapter  @relation(fields: [chapterId], references: [id])
+  authorId    String
+  author      Member   @relation(fields: [authorId], references: [id])
+  title       String
+  body        String   @db.Text
+  publishedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
+
+  @@index([chapterId, publishedAt])
+}
+
+model Event {
+  id           String           @id @default(cuid())
+  chapterId    String?
+  chapter      Chapter?         @relation(fields: [chapterId], references: [id])
+  title        String
+  type         EventType
+  description  String?          @db.Text
+  heroImageUrl String?
+  location     String?
+  virtualUrl   String?
+  startsAt     DateTime
+  endsAt       DateTime?
+  timezone     String           @default("UTC")
+  capacity     Int?
+  price        Int              @default(0)
+  currency     String           @default("GBP")
+  accessLevel  EventAccessLevel @default(ALL_MEMBERS)
+  rsvpDeadline DateTime?
+  dresscode    String?
+  agenda       Json?
+  publishedAt  DateTime?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  deletedAt    DateTime?
+
+  rsvps    EventRsvp[]
+  speakers EventSpeaker[]
+
+  @@index([startsAt])
+  @@index([chapterId])
+}
+
+model EventRsvp {
+  id              String     @id @default(cuid())
+  eventId         String
+  event           Event      @relation(fields: [eventId], references: [id])
+  memberId        String
+  member          Member     @relation(fields: [memberId], references: [id])
+  status          RsvpStatus @default(CONFIRMED)
+  isWaitlisted    Boolean    @default(false)
+  paidAt          DateTime?
+  stripePaymentId String?
+  createdAt       DateTime   @default(now())
+
+  @@unique([eventId, memberId])
+}
+
+model EventSpeaker {
+  id       String  @id @default(cuid())
+  eventId  String
+  event    Event   @relation(fields: [eventId], references: [id])
+  name     String
+  title    String?
+  bio      String?
+  photoUrl String?
+  memberId String? // optional link to platform member
+  order    Int     @default(0)
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// THE BAZAAR
+// ─────────────────────────────────────────────────────────────────────────────
+
+model BazaarListing {
+  id                   String        @id @default(cuid())
+  sellerId             String
+  seller               Member        @relation(fields: [sellerId], references: [id])
+  title                String        @db.VarChar(80)
+  type                 ListingType
+  categoryId           String
+  category             Category      @relation(fields: [categoryId], references: [id])
+  description          String        @db.Text
+  iranRelevance        String        @db.Text
+  countryCode          String
+  priceMin             Int?
+  priceMax             Int?
+  currency             String?
+  contactPreference    String        @default("platform_dm")
+  status               ListingStatus @default(DRAFT)
+  expiresAt            DateTime
+  rejectionReason      String?
+  hsCode               String?
+  minOrderQuantity     Int?
+  incoterms            String?
+  engagementType       String?
+  partnershipStructure String?
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+  deletedAt            DateTime?
+
+  tags      BazaarListingTag[]
+  images    BazaarListingImage[]
+  enquiries BazaarEnquiry[]
+
+  @@index([status])
+  @@index([type])
+  @@index([categoryId])
+  @@index([countryCode])
+}
+
+model BazaarListingTag {
+  listingId String
+  listing   BazaarListing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  tagId     String
+  tag       Tag           @relation("BazaarTags", fields: [tagId], references: [id])
+
+  @@id([listingId, tagId])
+}
+
+model BazaarListingImage {
+  id        String        @id @default(cuid())
+  listingId String
+  listing   BazaarListing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  url       String
+  alt       String?
+  order     Int           @default(0)
+}
+
+model BazaarEnquiry {
+  id        String        @id @default(cuid())
+  listingId String
+  listing   BazaarListing @relation(fields: [listingId], references: [id])
+  buyerId   String
+  message   String        @db.Text
+  status    String        @default("pending")
+  createdAt DateTime      @default(now())
+
+  @@unique([listingId, buyerId])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DEAL ROOM
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Deal {
+  id              String     @id @default(cuid())
+  title           String
+  type            DealType
+  sectorId        String
+  sector          Tag        @relation("DealSectors", fields: [sectorId], references: [id])
+  countryCode     String
+  targetRaiseMin  Int?
+  targetRaiseMax  Int?
+  minTicket       Int?
+  currency        String     @default("GBP")
+  summary         String     @db.Text
+  status          DealStatus @default(DRAFT)
+  openDate        DateTime?
+  closeDate       DateTime?
+  submittedById   String
+  leadInvestorId  String?
+  isAccordCapital Boolean    @default(false)
+  syndicateId     String?    @unique
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  deletedAt       DateTime?
+
+  ndas      DealNDA[]
+  documents DealDocument[]
+  iois      DealIndicatorOfInterest[]
+  syndicate Syndicate?
+
+  @@index([status])
+  @@index([type])
+}
+
+model DealNDA {
+  id           String    @id @default(cuid())
+  dealId       String
+  deal         Deal      @relation(fields: [dealId], references: [id])
+  memberId     String
+  member       Member    @relation(fields: [memberId], references: [id])
+  signedAt     DateTime
+  ipAddress    String?
+  signatureRef String?
+  revokedAt    DateTime?
+  createdAt    DateTime  @default(now())
+
+  @@unique([dealId, memberId])
+}
+
+model DealDocument {
+  id           String   @id @default(cuid())
+  dealId       String
+  deal         Deal     @relation(fields: [dealId], references: [id])
+  title        String
+  description  String?
+  fileUrl      String
+  fileSize     Int?
+  mimeType     String?
+  accessTier   Int      @default(2)
+  downloadable Boolean  @default(false)
+  uploadedById String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  deletedAt    DateTime?
+
+  accessLogs DealDocumentAccess[]
+}
+
+model DealDocumentAccess {
+  id         String       @id @default(cuid())
+  documentId String
+  document   DealDocument @relation(fields: [documentId], references: [id])
+  memberId   String
+  action     String
+  ipAddress  String?
+  createdAt  DateTime     @default(now())
+
+  @@index([documentId])
+  @@index([memberId])
+  @@index([createdAt])
+}
+
+model DealIndicatorOfInterest {
+  id        String   @id @default(cuid())
+  dealId    String
+  deal      Deal     @relation(fields: [dealId], references: [id])
+  memberId  String
+  member    Member   @relation(fields: [memberId], references: [id])
+  isBinding Boolean  @default(false)
+  amount    Int?
+  currency  String   @default("GBP")
+  notes     String?
+  status    String   @default("submitted")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([dealId, memberId])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SYNDICATE ENGINE
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Syndicate {
+  id          String          @id @default(cuid())
+  name        String
+  type        SyndicateType
+  sectorId    String
+  countryCode String
+  targetRaise Int?
+  minTicket   Int?
+  currency    String          @default("GBP")
+  memberCap   Int?
+  summary     String          @db.Text
+  status      SyndicateStatus @default(DRAFT)
+  openDate    DateTime?
+  closeDate   DateTime?
+  accessMode  String          @default("open")
+  createdById String
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  deletedAt   DateTime?
+
+  deal       Deal?                      @relation(fields: [id], references: [syndicateId])
+  members    SyndicateMember[]
+  documents  SyndicateDocument[]
+  discussion SyndicateDiscussionPost[]
+  votes      SyndicateVote[]
+
+  @@index([status])
+}
+
+model SyndicateMember {
+  id                  String              @id @default(cuid())
+  syndicateId         String
+  syndicate           Syndicate           @relation(fields: [syndicateId], references: [id])
+  memberId            String
+  member              Member              @relation(fields: [memberId], references: [id])
+  role                SyndicateMemberRole @default(PARTICIPANT)
+  ioi                 Int?
+  commitment          Int?
+  commitmentSignedAt  DateTime?
+  invitedAt           DateTime?
+  joinedAt            DateTime?
+  removedAt           DateTime?
+  createdAt           DateTime            @default(now())
+
+  @@unique([syndicateId, memberId])
+}
+
+model SyndicateDocument {
+  id           String    @id @default(cuid())
+  syndicateId  String
+  syndicate    Syndicate @relation(fields: [syndicateId], references: [id])
+  title        String
+  description  String?
+  fileUrl      String
+  accessTier   Int       @default(1)
+  downloadable Boolean   @default(false)
+  uploadedById String
+  createdAt    DateTime  @default(now())
+  deletedAt    DateTime?
+}
+
+model SyndicateDiscussionPost {
+  id          String    @id @default(cuid())
+  syndicateId String
+  syndicate   Syndicate @relation(fields: [syndicateId], references: [id])
+  authorId    String
+  body        String    @db.Text
+  isPinned    Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  @@index([syndicateId, createdAt])
+}
+
+model SyndicateVote {
+  id          String    @id @default(cuid())
+  syndicateId String
+  syndicate   Syndicate @relation(fields: [syndicateId], references: [id])
+  question    String
+  type        String    @default("simple_majority")
+  opensAt     DateTime
+  closesAt    DateTime
+  result      String?
+  createdAt   DateTime  @default(now())
+
+  responses SyndicateVoteResponse[]
+}
+
+model SyndicateVoteResponse {
+  id        String        @id @default(cuid())
+  voteId    String
+  vote      SyndicateVote @relation(fields: [voteId], references: [id])
+  memberId  String
+  choice    String
+  createdAt DateTime      @default(now())
+
+  @@unique([voteId, memberId])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// THE CHRONICLE
+// ─────────────────────────────────────────────────────────────────────────────
+
+model ChronicleArticle {
+  id             String        @id @default(cuid())
+  slug           String        @unique
+  title          String
+  subtitle       String?       @db.VarChar(150)
+  body           String        @db.Text
+  heroImageUrl   String?
+  type           ArticleType
+  status         ArticleStatus @default(DRAFT)
+  accessLevel    String        @default("members")
+  readingTimeMin Int?
+  language       String        @default("en")
+  seoTitle       String?
+  seoDescription String?
+  isSponsored    Boolean       @default(false)
+  publishedAt    DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  deletedAt      DateTime?
+
+  authors  ChronicleArticleAuthor[]
+  tags     ChronicleArticleTag[]
+  comments ChronicleComment[]
+
+  @@index([status, publishedAt])
+  @@index([slug])
+}
+
+model ChronicleArticleAuthor {
+  articleId String
+  article   ChronicleArticle @relation(fields: [articleId], references: [id])
+  memberId  String
+  member    Member           @relation(fields: [memberId], references: [id])
+  order     Int              @default(0)
+
+  @@id([articleId, memberId])
+}
+
+model ChronicleArticleTag {
+  articleId String
+  article   ChronicleArticle @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  tagId     String
+  tag       Tag              @relation("ChronicleArticleTags", fields: [tagId], references: [id])
+
+  @@id([articleId, tagId])
+}
+
+model ChronicleComment {
+  id        String           @id @default(cuid())
+  articleId String
+  article   ChronicleArticle @relation(fields: [articleId], references: [id])
+  authorId  String
+  body      String           @db.Text
+  isHidden  Boolean          @default(false)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  deletedAt DateTime?
+
+  @@index([articleId, createdAt])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// KNOWLEDGE BASE
+// ─────────────────────────────────────────────────────────────────────────────
+
+model KnowledgeDoc {
+  id             String    @id @default(cuid())
+  slug           String    @unique
+  title          String
+  abstract       String?   @db.VarChar(1000)
+  type           String
+  fileUrl        String?
+  bodyJson       String?   @db.Text
+  status         String    @default("draft")
+  accessLevel    String    @default("members")
+  language       String    @default("en")
+  version        String    @default("1.0")
+  downloadable   Boolean   @default(false)
+  publishedAt    DateTime?
+  lastReviewedAt DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  deletedAt      DateTime?
+
+  authors KnowledgeDocAuthor[]
+  tags    KnowledgeDocTag[]
+
+  @@index([status])
+}
+
+model KnowledgeDocAuthor {
+  docId    String
+  doc      KnowledgeDoc @relation(fields: [docId], references: [id])
+  memberId String
+  member   Member       @relation(fields: [memberId], references: [id])
+  order    Int          @default(0)
+
+  @@id([docId, memberId])
+}
+
+model KnowledgeDocTag {
+  docId  String
+  doc    KnowledgeDoc @relation(fields: [docId], references: [id], onDelete: Cascade)
+  tagId  String
+  tag    Tag          @relation("KnowledgeTags", fields: [tagId], references: [id])
+
+  @@id([docId, tagId])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TAXONOMY
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Tag {
+  id          String  @id @default(cuid())
+  name        String
+  slug        String  @unique
+  type        TagType
+  description String?
+
+  memberExpertise    MemberExpertise[]    @relation("ExpertiseTags")
+  memberIndustries   MemberIndustry[]     @relation("IndustryTags")
+  orgSectors         OrganizationSector[] @relation("OrgSectors")
+  bazaarListingTags  BazaarListingTag[]   @relation("BazaarTags")
+  chronicleTags      ChronicleArticleTag[] @relation("ChronicleArticleTags")
+  knowledgeTags      KnowledgeDocTag[]    @relation("KnowledgeTags")
+  dealSectors        Deal[]               @relation("DealSectors")
+}
+
+model Category {
+  id       String     @id @default(cuid())
+  name     String
+  slug     String     @unique
+  type     String
+  parentId String?
+  parent   Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children Category[] @relation("CategoryHierarchy")
+
+  bazaarListings BazaarListing[]
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MESSAGING
+// ─────────────────────────────────────────────────────────────────────────────
+
+model MessageThread {
+  id        String   @id @default(cuid())
+  type      String   @default("dm")
+  title     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  messages     Message[]
+  participants MessageThreadParticipant[]
+}
+
+model MessageThreadParticipant {
+  threadId   String
+  thread     MessageThread @relation(fields: [threadId], references: [id])
+  memberId   String
+  member     Member        @relation(fields: [memberId], references: [id])
+  joinedAt   DateTime      @default(now())
+  lastReadAt DateTime?
+
+  @@id([threadId, memberId])
+}
+
+model Message {
+  id        String        @id @default(cuid())
+  threadId  String
+  thread    MessageThread @relation(fields: [threadId], references: [id])
+  senderId  String
+  sender    Member        @relation(fields: [senderId], references: [id])
+  body      String        @db.Text
+  isRead    Boolean       @default(false)
+  createdAt DateTime      @default(now())
+  deletedAt DateTime?
+
+  @@index([threadId, createdAt])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// NOTIFICATIONS
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Notification {
+  id        String   @id @default(cuid())
+  memberId  String
+  member    Member   @relation(fields: [memberId], references: [id])
+  type      String
+  title     String
+  body      String?
+  linkUrl   String?
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([memberId, isRead])
+  @@index([createdAt])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AUDIT LOG (append-only)
+// ─────────────────────────────────────────────────────────────────────────────
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  actor      User?    @relation("actor", fields: [actorId], references: [id])
+  subjectId  String?
+  subject    Member?  @relation("subject", fields: [subjectId], references: [id])
+  action     String
+  entityType String?
+  entityId   String?
+  metadata   Json?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  @@index([actorId])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}
